@@ -1,0 +1,21 @@
+# Секреты и локальные настройки
+.env
+!.env.example
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Данные приложений
+*.db
+
+# Node.js
+node_modules/
+dist/
+
+# Редакторы и ОС
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

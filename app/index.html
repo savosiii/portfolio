@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Айра — ИИ-бот для бизнеса</title>
+<style>
+:root{
+  --p-accent: oklch(0.60 0.14 175);
+  --p-ink: oklch(0.25 0.02 250);
+  --surface: oklch(0.985 0.004 95);
+  --surface-2: oklch(0.955 0.007 100);
+  --surface-3: oklch(0.93 0.01 150);
+  --text: var(--p-ink);
+  --text-2: oklch(0.45 0.015 255);
+  --accent: var(--p-accent);
+  --accent-ink: oklch(0.99 0.005 175);
+  --line: oklch(0.88 0.01 250);
+  --danger: oklch(0.55 0.19 25);
+  --ok: oklch(0.55 0.15 155);
+  --radius: 14px;
+  --font-body: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font:16px/1.65 var(--font-body);color:var(--text);background:var(--surface);-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:var(--accent);text-decoration:none}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.layout{max-width:1120px;margin:0 auto;padding:24px 20px 40px;display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;min-height:100dvh}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+
+/* ---- Левая панель ---- */
+.panel{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:24px;position:sticky;top:24px}
+.bot-id{display:flex;gap:14px;align-items:center}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.avatar svg{width:30px;height:30px}
+.bot-id h1{font:700 22px/1.2 var(--font-display);letter-spacing:.2px}
+.bot-id p{color:var(--text-2);font-size:14px}
+.status{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:13px;color:var(--text-2)}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.cap-title{margin:22px 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-2)}
+.cap-list{list-style:none;display:grid;gap:10px}
+.cap-list li{display:flex;gap:10px;font-size:14.5px;line-height:1.45}
+.cap-list svg{width:18px;height:18px;flex:none;margin-top:2px;color:var(--accent)}
+.demo-note{margin-top:20px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;font-size:13px;color:var(--text-2);background:var(--surface)}
+.demo-note b{color:var(--text)}
+
+/* ---- Чат ---- */
+.chat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;height:calc(100dvh - 64px);min-height:480px;overflow:hidden}
+@media (max-width:860px){.chat{height:calc(100dvh - 48px)}}
+.chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.chat-head .who{display:flex;align-items:center;gap:10px;min-width:0}
+.chat-head .avatar{width:38px;height:38px}
+.chat-head .avatar svg{width:20px;height:20px}
+.chat-head b{font-size:15px}
+.chat-head span{display:block;font-size:12.5px;color:var(--text-2)}
+.chat-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex:none}
+.menu-button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font-size:13px;white-space:nowrap;transition:background .15s,border-color .15s}
+.menu-button:hover{background:var(--surface-3);border-color:var(--accent)}
+.menu-button:active{transform:translateY(1px)}
+.menu-button svg{width:17px;height:17px;flex:none}
+.chat-head .menu-button span{display:inline;font-size:13px;color:inherit}
+.lead-count{font-size:13px;color:var(--text-2);white-space:nowrap}
+@media (max-width:520px){.chat-actions{gap:8px}.menu-button{padding:8px}.chat-head .menu-button span{display:none}}
+.msgs{flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:14px}
+.msg{max-width:82%;padding:11px 15px;border-radius:16px;font-size:15px;line-height:1.55;white-space:pre-wrap;animation:pop .18s ease-out}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.msg.bot{background:var(--surface-2);border:1px solid var(--line);border-bottom-left-radius:5px;align-self:flex-start}
+.msg.user{background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:5px;align-self:flex-end}
+.msg .svc{display:block;margin-top:8px;padding:9px 11px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font-size:14px}
+.msg .svc b{display:block}
+.msg .svc span{color:var(--text-2);font-size:13px}
+.msg .svc em{font-style:normal;color:var(--accent);font-weight:600;font-size:13.5px}
+.msg a{font-weight:600}
+.typing{align-self:flex-start;display:inline-flex;gap:5px;padding:14px 16px;background:var(--surface-2);border:1px solid var(--line);border-radius:16px;border-bottom-left-radius:5px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--text-2);animation:blink 1.1s infinite}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* Быстрые ответы */
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 12px}
+.chips:empty{display:none}
+.chip{padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:14px;color:var(--text);transition:background .15s,border-color .15s}
+.chip:hover{background:var(--surface-3);border-color:var(--accent)}
+
+/* Форма заявки в чате */
+.lead-form{align-self:stretch;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:10px;margin-top:2px;animation:pop .18s ease-out}
+.lead-form h3{font-size:15.5px}
+.lead-form p{font-size:13.5px;color:var(--text-2)}
+.lead-form label{font-size:13px;color:var(--text-2);display:grid;gap:4px}
+.lead-form input,.lead-form textarea{font:inherit;font-size:15px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);resize:vertical}
+.lead-form input:focus,.lead-form textarea:focus{border-color:var(--accent);outline:none}
+.lead-form .err{border-color:var(--danger)!important}
+.lead-ok{align-self:stretch;text-align:center;padding:18px;background:var(--surface-2);border:1px solid var(--ok);border-radius:14px}
+.lead-ok b{color:var(--ok)}
+
+/* Ввод */
+.composer{display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--line);background:var(--surface-2)}
+.composer input{flex:1;font:inherit;font-size:15px;padding:11px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--text)}
+.composer input:focus{border-color:var(--accent);outline:none}
+.send{width:46px;height:46px;flex:none;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;transition:transform .12s}
+.send:hover{transform:scale(1.06)}
+.send svg{width:20px;height:20px}
+
+/* Модальное окно заявки из шапки */
+.overlay{position:fixed;inset:0;background:oklch(0.2 0.02 250 /.45);display:grid;place-items:center;padding:20px;z-index:10}
+.overlay[hidden]{display:none}
+.modal{width:min(440px,100%);background:var(--surface);border-radius:16px;padding:24px;display:grid;gap:10px}
+.modal h2{font:700 20px var(--font-display)}
+.modal .lead-form{border:none;padding:0;background:none;margin:0}
+.modal .close{justify-self:end;font-size:13px;color:var(--text-2);padding:6px 10px;border-radius:8px}
+.modal .close:hover{background:var(--surface-2)}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Левая панель -->
+  <aside class="panel">
+    <div class="bot-id">
+      <div class="avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7v1a7 7 0 0 1-14 0V9a7 7 0 0 1 7-7Z"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/><path d="M12 16v4"/><path d="M9 20h6"/></svg>
+      </div>
+      <div>
+        <h1 id="panelBotName">Айра</h1>
+        <p id="panelTagline">консультант компании</p>
+        <span class="status">онлайн, отвечает мгновенно</span>
+      </div>
+    </div>
+
+    <h2 class="cap-title">Что умеет бот</h2>
+    <ul class="cap-list">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Отвечает на частые вопросы клиентов: цены, график, адрес, оплата, гарантии</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Рассказывает об услугах и помогает подобрать пакет</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Собирает заявки: имя, телефон и вопрос клиента</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>Работает 24/7, когда менеджеры недоступны</li>
+    </ul>
+
+    <div class="demo-note">
+      <b>Демо-версия.</b> Ответы бота работают на встроенном сценарном движке (без внешнего сервера). Тексты, услуги и контакты легко заменить под ваш бизнес в файле <b>src/config.js</b>. Заявки доставляются владельцу через <b>relay_bot.py</b> прямо в Telegram.
+    </div>
+  </aside>
+
+  <!-- Чат -->
+  <section class="chat" aria-label="Чат с ботом">
+    <header class="chat-head">
+      <div class="who">
+        <div class="avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7v1a7 7 0 0 1-14 0V9a7 7 0 0 1 7-7Z"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/><path d="M12 16v4"/><path d="M9 20h6"/></svg>
+        </div>
+        <div>
+          <b id="headBotName">Айра</b>
+          <span id="headCompany">ООО «Вектор»</span>
+        </div>
+      </div>
+      <div class="chat-actions">
+        <button class="menu-button" id="mainMenuButton" type="button" title="Вернуться в главное меню" aria-label="Вернуться в главное меню">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+          <span>Главное меню</span>
+        </button>
+        <span class="lead-count" id="leadCount"></span>
+      </div>
+    </header>
+
+    <div class="msgs" id="msgs" role="log" aria-live="polite"></div>
+    <div class="chips" id="chips"></div>
+
+    <form class="composer" id="composer">
+      <input id="input" type="text" placeholder="Напишите сообщение…" autocomplete="off" aria-label="Сообщение">
+      <button class="send" type="submit" aria-label="Отправить">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+      </button>
+    </form>
+  </section>
+</div>
+
+<!-- Модальное окно: оставить заявку -->
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="close" id="closeModal" type="button">Закрыть ✕</button>
+    <h2 id="modalTitle">Заявка менеджеру</h2>
+    <form class="lead-form" id="modalLeadForm" novalidate>
+      <label>Ваше имя
+        <input name="name" type="text" placeholder="Иван" required>
+      </label>
+      <label>Телефон
+        <input name="phone" type="tel" placeholder="+7 (___) ___-__-__" required>
+      </label>
+      <label>Вопрос
+        <textarea name="question" rows="3" placeholder="Коротко о вашей задаче"></textarea>
+      </label>
+      <button class="chip" type="submit" style="justify-self:start;background:var(--accent);color:var(--accent-ink);border-color:var(--accent);padding:10px 20px">Отправить заявку</button>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
